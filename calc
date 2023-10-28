@@ -1,0 +1,125 @@
+import java.util.*;
+
+class Main {
+public static String calc(String input) {
+    try {
+        String[] parts = input.split(" ");
+
+        if (parts.length != 3)
+            throw new IllegalArgumentException("Invalid input");
+
+        String num1 = parts[0];
+        String operator = parts[1];
+        String num2 = parts[2];
+
+        boolean isRomanNum1 = isRoman(num1);
+        boolean isRomanNum2 = isRoman(num2);
+
+        if (isRomanNum1 != isRomanNum2) {
+            throw new IllegalArgumentException("Mixed numeral systems");
+        }
+
+        int operand1 = isRomanNum1 ? fromRoman(num1) : Integer.parseInt(num1);
+        int operand2 = isRomanNum2 ? fromRoman(num2) : Integer.parseInt(num2);
+
+        if ((operand1 < 1 || operand1 > 10) || (operand2 < 1 || operand2 > 10)) {
+            throw new IllegalArgumentException("Numbers out of range");
+        }
+
+        int result = performOperation(operand1, operator, operand2);
+
+        if (isRomanNum1 && isRomanNum2) {
+            if (result <= 0) {
+                throw new IllegalArgumentException("Roman result should be positive");
+            }
+            return toRoman(result);
+        } else if (isRomanNum1 && isRomanNum2 && result < 1) {
+            throw new IllegalArgumentException("Negative Roman result");
+        } else {
+            return String.valueOf(result);
+        }
+    } catch (IllegalArgumentException e) {
+        return "throws Exception";
+    }
+}
+
+
+    private static int parseOperand(String operand) {
+        try {
+            if (isRoman(operand)) {
+                return fromRoman(operand);
+            } else {
+                return Integer.parseInt(operand);
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid number format");
+        }
+    }
+
+    private static int performOperation(int num1, String operator, int num2) {
+        switch (operator) {
+            case "+":
+                return num1 + num2;
+            case "-":
+                return num1 - num2;
+            case "*":
+                return num1 * num2;
+            case "/":
+                return num1 / num2;
+            default:
+                throw new IllegalArgumentException("Invalid operator");
+        }
+    }
+
+    private static boolean isRoman(String s) {
+        return s.matches("^[IVXLCDM]+$");
+    }
+
+    private static String toRoman(int number) {
+        if (number < 1 || number > 10)
+            throw new IllegalArgumentException("Roman number out of range");
+
+        String[] romanNumerals = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+        return romanNumerals[number - 1];
+    }
+
+    private static int fromRoman(String roman) {
+        int result = 0;
+        int previousValue = 0;
+
+        for (int i = roman.length() - 1; i >= 0; i--) {
+            char currentSymbol = roman.charAt(i);
+            int currentValue = getValue(currentSymbol);
+
+            if (currentValue < previousValue) {
+                result -= currentValue;
+            } else {
+                result += currentValue;
+            }
+
+            previousValue = currentValue;
+        }
+
+        return result;
+    }
+
+    private static int getValue(char romanSymbol) {
+        switch (romanSymbol) {
+            case 'I':
+                return 1;
+            case 'V':
+                return 5;
+            case 'X':
+                return 10;
+            default:
+                throw new IllegalArgumentException("Invalid Roman numeral");
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine();
+        String output = calc(input);
+        System.out.println(output);
+    }
+}
