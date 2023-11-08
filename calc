@@ -1,125 +1,129 @@
 import java.util.*;
 
-class Main {
-public static String calc(String input) {
-    try {
-        String[] parts = input.split(" ");
+public class Main {
 
-        if (parts.length != 3)
-            throw new IllegalArgumentException("Invalid input");
+    private static final NavigableMap<Integer, String> arabicToRomanMap = new TreeMap<>();
+    private static final Map<String, Integer> romanToIntMap = new HashMap<>();
 
-        String num1 = parts[0];
-        String operator = parts[1];
-        String num2 = parts[2];
+    static {
+        arabicToRomanMap.put(100, "C");
+        arabicToRomanMap.put(90, "XC");
+        arabicToRomanMap.put(50, "L");
+        arabicToRomanMap.put(40, "XL");
+        arabicToRomanMap.put(10, "X");
+        arabicToRomanMap.put(9, "IX");
+        arabicToRomanMap.put(5, "V");
+        arabicToRomanMap.put(4, "IV");
+        arabicToRomanMap.put(1, "I");
 
-        boolean isRomanNum1 = isRoman(num1);
-        boolean isRomanNum2 = isRoman(num2);
-
-        if (isRomanNum1 != isRomanNum2) {
-            throw new IllegalArgumentException("Mixed numeral systems");
-        }
-
-        int operand1 = isRomanNum1 ? fromRoman(num1) : Integer.parseInt(num1);
-        int operand2 = isRomanNum2 ? fromRoman(num2) : Integer.parseInt(num2);
-
-        if ((operand1 < 1 || operand1 > 10) || (operand2 < 1 || operand2 > 10)) {
-            throw new IllegalArgumentException("Numbers out of range");
-        }
-
-        int result = performOperation(operand1, operator, operand2);
-
-        if (isRomanNum1 && isRomanNum2) {
-            if (result <= 0) {
-                throw new IllegalArgumentException("Roman result should be positive");
-            }
-            return toRoman(result);
-        } else if (isRomanNum1 && isRomanNum2 && result < 1) {
-            throw new IllegalArgumentException("Negative Roman result");
-        } else {
-            return String.valueOf(result);
-        }
-    } catch (IllegalArgumentException e) {
-        return "throws Exception";
-    }
-}
-
-
-    private static int parseOperand(String operand) {
-        try {
-            if (isRoman(operand)) {
-                return fromRoman(operand);
-            } else {
-                return Integer.parseInt(operand);
-            }
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid number format");
-        }
-    }
-
-    private static int performOperation(int num1, String operator, int num2) {
-        switch (operator) {
-            case "+":
-                return num1 + num2;
-            case "-":
-                return num1 - num2;
-            case "*":
-                return num1 * num2;
-            case "/":
-                return num1 / num2;
-            default:
-                throw new IllegalArgumentException("Invalid operator");
-        }
-    }
-
-    private static boolean isRoman(String s) {
-        return s.matches("^[IVXLCDM]+$");
-    }
-
-    private static String toRoman(int number) {
-        if (number < 1 || number > 10)
-            throw new IllegalArgumentException("Roman number out of range");
-
-        String[] romanNumerals = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
-        return romanNumerals[number - 1];
-    }
-
-    private static int fromRoman(String roman) {
-        int result = 0;
-        int previousValue = 0;
-
-        for (int i = roman.length() - 1; i >= 0; i--) {
-            char currentSymbol = roman.charAt(i);
-            int currentValue = getValue(currentSymbol);
-
-            if (currentValue < previousValue) {
-                result -= currentValue;
-            } else {
-                result += currentValue;
-            }
-
-            previousValue = currentValue;
-        }
-
-        return result;
-    }
-
-    private static int getValue(char romanSymbol) {
-        switch (romanSymbol) {
-            case 'I':
-                return 1;
-            case 'V':
-                return 5;
-            case 'X':
-                return 10;
-            default:
-                throw new IllegalArgumentException("Invalid Roman numeral");
-        }
+        romanToIntMap.put("I", 1);
+        romanToIntMap.put("IV", 4);
+        romanToIntMap.put("V", 5);
+        romanToIntMap.put("IX", 9);
+        romanToIntMap.put("X", 10);
+        romanToIntMap.put("XL", 40);
+        romanToIntMap.put("L", 50);
+        romanToIntMap.put("XC", 90);
+        romanToIntMap.put("C", 100);
     }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        String input = scanner.nextLine();
-        String output = calc(input);
-        System.out.println(output);
+        while (scanner.hasNextLine()) {
+            String input = scanner.nextLine();
+            if (input.isEmpty()) break; // Завершаем ввод, если строка пустая
+            try {
+                String result = calculate(input);
+                System.out.println(result);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    public static String calculate(String input) throws Exception {
+        String[] tokens = input.split(" ");
+        if (tokens.length != 3) {
+            throw new Exception("Формат математической операции не удовлетворяет заданию - два операнда и один оператор (+, -, /, *)");
+        }
+
+        String operand1 = tokens[0];
+        String operand2 = tokens[2];
+        String operator = tokens[1];
+
+        boolean isRoman = operand1.matches("^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$");
+
+        if (isRoman != operand2.matches("^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$")) {
+            throw new Exception("Используются одновременно разные системы счисления");
+        }
+
+        int number1;
+        int number2;
+
+        if (isRoman) {
+            number1 = romanToArabic(operand1);
+            number2 = romanToArabic(operand2);
+        } else {
+            number1 = Integer.parseInt(operand1);
+            number2 = Integer.parseInt(operand2);
+        }
+
+        if (number1 < 1 || number1 > 10 || number2 < 1 || number2 > 10) {
+            throw new Exception("Вводимые числа должны быть от 1 до 10 включительно");
+        }
+
+        int result;
+        switch (operator) {
+            case "+":
+                result = number1 + number2;
+                break;
+            case "-":
+                result = number1 - number2;
+                break;
+            case "*":
+                result = number1 * number2;
+                break;
+            case "/":
+                result = number1 / number2;
+                break;
+            default:
+                throw new Exception("Строка не является математической операцией");
+        }
+
+        if (isRoman) {
+            if (result < 1) throw new Exception("В римской системе нет отрицательных чисел");
+            return arabicToRoman(result);
+        } else {
+            return String.valueOf(result);
+        }
+    }
+
+    public static String arabicToRoman(int number) {
+        if (number <= 0) {
+            throw new IllegalArgumentException("Roman numeral must be positive");
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Integer i : arabicToRomanMap.descendingKeySet()) {
+            while (number >= i) {
+                sb.append(arabicToRomanMap.get(i));
+                number -= i;
+            }
+        }
+        return sb.toString();
+    }
+
+    public static int romanToArabic(String roman) {
+        int result = 0;
+        int previous = 0;
+        for (String symbol : roman.split("")) {
+            int current = romanToIntMap.get(symbol);
+            if (current > previous) {
+                result += current - 2 * previous;
+            } else {
+                result += current;
+            }
+            previous = current;
+        }
+        return result;
     }
 }
